@@ -1,0 +1,7 @@
+*.code-workspace
+*.log
+.venv
+.pytest_cache
+.streamlit/secrets.toml
+__pycache__
+secrets.env

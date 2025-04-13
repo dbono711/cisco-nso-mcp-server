@@ -1,0 +1,10 @@
+[theme]
+base="dark"
+primaryColor="#478de2"
+
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "developer"
