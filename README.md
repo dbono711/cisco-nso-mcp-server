@@ -23,9 +23,29 @@ This project uses the **FastMCP Server-Client Architecture** approach to MCP imp
 
 This approach differs from embedded MCP implementations by maintaining a clear separation between the AI integration layer and the network automation logic, making the system more maintainable and extensible.
 
+### Embedded vs. Server-Client MCP Implementations
+
+To clarify the distinction:
+
+- **Embedded MCP Implementation**: 
+  - Tool definitions, execution logic, and AI integration code all exist within the same application or process
+  - No clear separation between the AI interaction layer and the tool implementation layer
+  - Tools are typically tightly coupled to the specific AI framework being used
+  - Simpler to set up initially but less flexible for future changes or expansion
+
+- **Server-Client MCP Implementation** (used in this project):
+  - Separates the MCP server (containing tool implementations) from the client (handling AI integration)
+  - Uses a well-defined communication protocol between these components
+  - Allows tool implementations to be completely independent of the AI framework
+  - More modular architecture that follows better separation of concerns principles
+  - Enables tools to be used with different AI frameworks or even without AI involvement
+  - Facilitates independent updating of either the AI integration or the tool implementations
+
+This separation is particularly valuable in network automation contexts where tools may need to be used across multiple interfaces (web UIs, CLI, AI assistants) or where the underlying network infrastructure tools may evolve independently from the AI integration components.
+
 ## What is MCP?
 
-The Model Context Protocol (MCP) is an open protocol that standardizes how AI models interact with external tools and services. MCP enables:
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that standardizes how AI models interact with external tools and services. MCP enables:
 
 - **Tool Definition**: Structured way to define tools that AI models can use
 - **Tool Discovery**: Mechanism for models to discover available tools
@@ -33,6 +53,16 @@ The Model Context Protocol (MCP) is an open protocol that standardizes how AI mo
 - **Context Management**: Efficient passing of context between tools and models
 - **Framework Agnostic**: Works across multiple AI frameworks including OpenAI, Anthropic, Google Gemini, and others
 - **Interoperability**: Provides a common language for AI systems to communicate with external tools
+
+### Important Note on MCP Flexibility
+
+MCP and similar tool frameworks (like Smithery or OpenTools) are completely LLM-agnostic - they're simply APIs with a specific protocol. This means you can:
+
+- **Use them directly** in any application without an LLM
+- **Let an LLM control them** through an integration layer (as demonstrated in this project)
+- **Mix both approaches** depending on your specific needs and use cases
+
+This flexibility makes MCP tools valuable beyond just LLM applications, serving as standardized interfaces for various automation needs.
 
 In this project, MCP acts as the bridge between OpenAI's GPT models and Cisco NSO, allowing the AI to query and interact with network devices through well-defined tool interfaces.
 
@@ -57,6 +87,12 @@ In this project, MCP acts as the bridge between OpenAI's GPT models and Cisco NS
 - **Reduced Vendor Lock-in**: The same tools can be used across different AI providers
 - **Future-Proof Design**: As new AI models emerge, your tools remain compatible through the MCP standard
 - **Simplified Development**: Developers can focus on tool functionality rather than AI integration details
+
+### In Simple Terms
+
+Without MCP, developers would need to create and maintain separate integrations between each AI model and every network tool they want to use - imagine building custom connectors for every possible combination of AI systems and network tools. This quickly becomes unmanageable as your toolset grows.
+
+MCP solves this by providing a single, standardized "translator" that sits between AI models and network tools. You build each tool once, connect it to MCP, and it instantly works with any AI model that speaks the MCP language. This dramatically reduces development time, maintenance overhead, and technical complexity while making your network automation solution more flexible and future-proof.
 
 ## Current Tools
 
@@ -84,16 +120,10 @@ In this project, MCP acts as the bridge between OpenAI's GPT models and Cisco NS
 
 ## Usage
 
-Start the MCP server:
+Start the test client, with the server script path:
 
 ```bash
-python mcp-server.py
-```
-
-In another terminal, start the client:
-
-```bash
-python mcp-test-client.py mcp-server.py
+python mcp_test_client.py mcp_server.py
 ```
 
 You can then interact with your network infrastructure using natural language queries:

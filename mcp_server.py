@@ -19,7 +19,7 @@ from loggerfactory import LoggerFactory
 logger = LoggerFactory.get_logger("mcp-server", "INFO")
 
 # initialize FastMCP server
-mcp = FastMCP("nso-mcp")
+mcp = FastMCP("nso-mcp", version="0.1.0", description="Cisco NSO MCP Server")
 
 # initialize the NSORestconfClient
 client = NSORestconfClient(
