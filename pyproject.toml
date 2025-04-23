@@ -1,15 +1,12 @@
 [project]
 name = "cisco-nso-mcp-server"
 version = "0.1.0"
-description = "Add your description here"
+description = "Cisco NSO MCP Server"
 readme = "README.md"
 requires-python = ">=3.13.1"
 dependencies = [
-    "anthropic>=0.49.0",
-    "cisco-nso-restconf>=1.0.4",
+    "cisco-nso-restconf>=1.0.5",
     "httpx>=0.28.1",
-    "mcp[cli,http]>=1.6.0",
-    "openai>=1.72.0",
-    "python-dotenv>=1.1.0",
-    "streamlit>=1.44.1",
+    "mcp[cli]>=1.6.0",
+    "python-dotenv>=1.1.0"
 ]

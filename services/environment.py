@@ -1,0 +1,112 @@
+import asyncio
+from datetime import datetime
+from utils import logger
+
+async def get_environment_summary(query_helper):
+    try:
+        logger.info("Retrieving environment data from NSO")
+        
+        # Query device platforms
+        device_platforms = await asyncio.to_thread(query_helper.query_device_platform)
+        
+        # Process raw data into structured format
+        devices = _process_device_data(device_platforms)
+        
+        # generate insights from device data
+        insights = _generate_insights(devices)
+        
+        # format the response
+        response = {
+            "status": "success",
+            "data": {
+                "insights": insights
+            },
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "summary": f"Environment contains {len(devices)} devices across {len(insights.get('os_distribution', {}))} operating systems"
+            }
+        }
+        
+        logger.info("Successfully generated environment summary")
+
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error retrieving environment data: {str(e)}")
+        raise ValueError(f"Failed to retrieve NSO environment: {str(e)}")
+
+def _process_device_data(device_platforms):
+    # build device dictionary
+    devices = {}
+    for device_entry in device_platforms:
+        device_info = {}
+        device_name = None
+    
+        # extract all label-value pairs for this device
+        for item in device_entry['select']:
+            label = item['label']
+            value = item['value']
+        
+            # store the device name to use as the key
+            if label == 'name':
+                device_name = value
+            else:
+                # convert label to snake_case if needed (already done in your data)
+                device_info[label] = value
+    
+        # add the device to our dictionary if we found a name
+        if device_name:
+            devices[device_name] = device_info
+
+    return devices
+
+def _generate_insights(devices):
+    # generate insights from the device data
+    insights = {}
+        
+    # count total devices
+    insights["device_count"] = len(devices)
+        
+    # count unique operating systems
+    os_types = {}
+    for device, info in devices.items():
+        os_type = info.get("os", "unknown").lower()
+        os_types[os_type] = os_types.get(os_type, 0) + 1
+        
+    insights["os_distribution"] = os_types
+    insights["unique_os_count"] = len(os_types)
+        
+    # count unique versions per OS
+    os_versions = {}
+    for device, info in devices.items():
+        os_type = info.get("os", "unknown").lower()
+        version = info.get("version", "unknown")
+            
+        if os_type not in os_versions:
+            os_versions[os_type] = {}
+            
+        os_versions[os_type][version] = os_versions[os_type].get(version, 0) + 1
+        
+    insights["os_versions"] = os_versions
+        
+    # count unique device models
+    models = {}
+    for device, info in devices.items():
+        model = info.get("model", "unknown")
+        models[model] = models.get(model, 0) + 1
+        
+    insights["model_distribution"] = models
+    insights["unique_model_count"] = len(models)
+        
+    # count device series insights (based on naming patterns)
+    series_counts = {}
+    for device in devices:
+        # extract series from device name (e.g., ios, iosxr, nxos)
+        parts = device.split('-')
+        if len(parts) > 0:
+            series = parts[0]
+            series_counts[series] = series_counts.get(series, 0) + 1
+        
+    insights["series_distribution"] = series_counts
+    
+    return insights
