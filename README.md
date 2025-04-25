@@ -172,8 +172,6 @@ The MCP server leverages Python's asynchronous programming capabilities to effic
 - **Concurrent Processing**: Multiple tool calls can be processed simultaneously without waiting for previous operations to complete
 - **Error Handling**: Asynchronous try/except blocks capture and properly format errors from network operations
 
-This asynchronous approach is particularly valuable for network automation, where operations often involve waiting for network devices to respond.
-
 ## License
 
 [MIT License](LICENSE)
