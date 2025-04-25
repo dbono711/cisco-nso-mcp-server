@@ -5,9 +5,9 @@ This module provides a pre-configured logger that can be imported directly:
     from utils.logging import logger
 """
 # Import and expose the default logger from LoggerFactory
-from utils.loggerfactory import default_logger as logger
+from cisco_nso_mcp_server.utils.loggerfactory import default_logger as logger
 
 # You can also expose the LoggerFactory if needed for advanced use cases
-from utils.loggerfactory import LoggerFactory
+from cisco_nso_mcp_server.utils.loggerfactory import LoggerFactory
 
 __all__ = ["logger", "LoggerFactory"]

@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from utils import logger
+from cisco_nso_mcp_server.utils import logger
 
 async def get_environment_summary(query_helper):
     try:

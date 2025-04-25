@@ -9,10 +9,10 @@ from cisco_nso_restconf.client import NSORestconfClient
 from cisco_nso_restconf.devices import Devices
 from cisco_nso_restconf.query import Query
 from mcp.server.fastmcp import FastMCP
-from services.environment import get_environment_summary
-from services.devices import get_device_platform, get_device_ned_ids
+from cisco_nso_mcp_server.services.environment import get_environment_summary
+from cisco_nso_mcp_server.services.devices import get_device_platform, get_device_ned_ids
 from typing import Optional, Dict, Any
-from utils import logger
+from cisco_nso_mcp_server.utils import logger
 
 
 def register_resources(mcp, query_helper):

@@ -1,12 +1,26 @@
 [project]
 name = "cisco-nso-mcp-server"
 version = "0.1.0"
+license = "MIT"
 description = "Cisco NSO MCP Server"
 readme = "README.md"
-requires-python = ">=3.13.1"
+authors = [
+    {name = "Darren Bono", email = "dbono215@gmail.com"},
+]
+requires-python = ">=3.13.1,<4.0"
 dependencies = [
     "cisco-nso-restconf>=1.0.5",
     "httpx>=0.28.1",
     "mcp[cli]>=1.6.0",
     "python-dotenv>=1.1.0"
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/dbono711/cisco-nso-mcp-server"
+
+[project.scripts]
+cisco-nso-mcp-server = "cisco_nso_mcp_server.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

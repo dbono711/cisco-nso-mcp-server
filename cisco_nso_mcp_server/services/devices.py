@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime
-from utils import logger
+from cisco_nso_mcp_server.utils import logger
 from requests.exceptions import RequestException
 
 async def get_device_platform(devices_helper, device_name):
