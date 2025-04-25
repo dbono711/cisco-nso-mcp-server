@@ -1,6 +1,8 @@
 *.code-workspace
 *.log
-.venv
 .pytest_cache
-__pycache__
-secrets.env
+__pycache__/
+*.py[oc]
+build/
+dist/
+.venv
