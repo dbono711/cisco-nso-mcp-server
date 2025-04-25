@@ -5,6 +5,8 @@ Cisco NSO MCP Server
 This module implements a Model Context Protocol (MCP) server that provides
 network automation tools for interacting with Cisco NSO via RESTCONF.
 """
+import argparse
+import os
 from cisco_nso_restconf.client import NSORestconfClient
 from cisco_nso_restconf.devices import Devices
 from cisco_nso_restconf.query import Query
@@ -69,18 +71,65 @@ def register_tools(mcp, devices_helper):
                 "error_message": str(e)
             }
 
-def main():
-    # initialize FastMCP server
-    mcp = FastMCP("nso-mcp", version="0.1.0", description="Cisco NSO MCP Server")
+def parse_args():
+    parser = argparse.ArgumentParser(description="Cisco NSO MCP Server")
     
-    # initialize NSO client
+    # NSO connection parameters
+    nso_group = parser.add_argument_group('NSO Connection Options')
+    nso_group.add_argument("--nso-scheme", default=os.environ.get("NSO_SCHEME", "http"),
+                        help="NSO connection scheme (default: http)")
+    nso_group.add_argument("--nso-address", default=os.environ.get("NSO_ADDRESS", "localhost"),
+                        help="NSO server address (default: localhost)")
+    nso_group.add_argument("--nso-port", type=int, default=int(os.environ.get("NSO_PORT", "8080")),
+                        help="NSO server port (default: 8080)")
+    nso_group.add_argument("--nso-timeout", type=int, default=int(os.environ.get("NSO_TIMEOUT", "10")),
+                        help="NSO connection timeout in seconds (default: 10)")
+    nso_group.add_argument("--nso-username", default=os.environ.get("NSO_USERNAME", "admin"),
+                        help="NSO username (default: admin)")
+    nso_group.add_argument("--nso-password", default=os.environ.get("NSO_PASSWORD", "admin"),
+                        help="NSO password (default: admin)")
+    
+    # MCP server parameters
+    mcp_group = parser.add_argument_group('MCP Server Options')
+    mcp_group.add_argument("--transport", default=os.environ.get("MCP_TRANSPORT", "stdio"),
+                        choices=["stdio", "sse"], help="MCP transport type (default: stdio)")
+    
+    # SSE-specific parameters
+    sse_group = parser.add_argument_group('SSE Transport Options (only used when --transport=sse)')
+    sse_group.add_argument("--host", default=os.environ.get("MCP_HOST", "0.0.0.0"),
+                        help="Host to bind to when using SSE transport (default: 0.0.0.0)")
+    sse_group.add_argument("--port", type=int, default=int(os.environ.get("MCP_PORT", "8000")),
+                        help="Port to bind to when using SSE transport (default: 8000)")
+    
+    args = parser.parse_args()
+    
+    # validate that host and port are provided if using SSE transport
+    if args.transport == "sse" and (not args.host or not args.port):
+        parser.error("--host and --port are required when using --transport=sse")
+    
+    return args
+
+def main():
+    # parse command line arguments
+    args = parse_args()
+    
+    # initialize FastMCP server with configurable parameters
+    mcp = FastMCP(
+        "nso-mcp", 
+        version="0.1.0", 
+        description="Cisco NSO MCP Server",
+        host=args.host if args.transport == "sse" else "0.0.0.0",
+        port=args.port if args.transport == "sse" else 8000
+    )
+    
+    # initialize NSO client with configurable parameters
     client = NSORestconfClient(
-        scheme="http",
-        address="localhost",
-        port=8080,
-        timeout=10,
-        username="admin",
-        password="admin",
+        scheme=args.nso_scheme,
+        address=args.nso_address,
+        port=args.nso_port,
+        timeout=args.nso_timeout,
+        username=args.nso_username,
+        password=args.nso_password,
     )
     logger.info("NSORestconfClient initialized")
 
@@ -92,9 +141,13 @@ def main():
     register_resources(mcp, query_helper)
     register_tools(mcp, devices_helper)
 
-    # run the server
-    logger.info("🚀 Starting Model Context Protocol (MCP) NSO Server with stdio connection")
-    mcp.run(transport='stdio')
+    # run the server with the specified transport
+    if args.transport == "stdio":
+        logger.info("🚀 Starting Model Context Protocol (MCP) NSO Server with stdio transport")
+        mcp.run(transport='stdio')
+    elif args.transport == "sse":
+        logger.info(f"🚀 Starting Model Context Protocol (MCP) NSO Server with SSE transport on {args.host}:{args.port}")
+        mcp.run(transport='sse')
 
 
 if __name__ == "__main__":

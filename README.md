@@ -4,44 +4,15 @@ A Model Context Protocol (MCP) server implementation for Cisco NSO (Network Serv
 
 ## Overview
 
-This project integrates Cisco NSO with OpenAI's GPT models using the Model Context Protocol (MCP) framework, allowing network engineers to interact with network infrastructure using natural language. The implementation consists of two main components:
+This package provides a standalone MCP server for Cisco NSO, written in Python, that can be installed with ```pip``` and run as a command-line tool. It exposes capabilities in Cisco NSO as MCP tools and resources that can be consumed by any MCP-compatible client.
 
-1. **MCP Server**: Provides network automation tools that can be called by AI models
-2. **MCP Test Client**: Connects to the MCP server and integrates with OpenAI to enable conversational network management
+```bash
+# Install the package
+pip install cisco-nso-mcp-server
 
-## Implementation Approach
-
-This project uses the **FastMCP Server-Client Architecture** approach to MCP implementation, which offers several advantages for network automation:
-
-- **Dedicated Server**: A standalone MCP server (written in Python) that encapsulates all network automation logic
-- **Stdio Transport**: Communication between client and server happens via standard I/O, allowing for efficient local execution
-  > *Note: Unlike Server-Sent Events (SSE) which enables network-based, multi-client communication, Stdio transport provides simpler, process-bound communication ideal for local tools and development.*
-- **Tool-First Design**: Network operations are defined as discrete tools with clear interfaces
-- **Asynchronous Processing**: All network operations are implemented asynchronously for better performance
-  > *Note: The server uses Python's `async`/`await` syntax with `asyncio.to_thread` to handle I/O-bound operations without blocking. This allows the server to handle multiple concurrent tool calls efficiently, even when network operations take time to complete.*
-- **Structured Responses**: Consistent response format with status, data, and metadata sections
-
-This approach differs from embedded MCP implementations by maintaining a clear separation between the AI integration layer and the network automation logic, making the system more maintainable and extensible.
-
-### Embedded vs. Server-Client MCP Implementations
-
-To clarify the distinction:
-
-- **Embedded MCP Implementation**: 
-  - Tool definitions, execution logic, and AI integration code all exist within the same application or process
-  - No clear separation between the AI interaction layer and the tool implementation layer
-  - Tools are typically tightly coupled to the specific AI framework being used
-  - Simpler to set up initially but less flexible for future changes or expansion
-
-- **Server-Client MCP Implementation** (used in this project):
-  - Separates the MCP server (containing tool implementations) from the client (handling AI integration)
-  - Uses a well-defined communication protocol between these components
-  - Allows tool implementations to be completely independent of the AI framework
-  - More modular architecture that follows better separation of concerns principles
-  - Enables tools to be used with different AI frameworks or even without AI involvement
-  - Facilitates independent updating of either the AI integration or the tool implementations
-
-This separation is particularly valuable in network automation contexts where tools may need to be used across multiple interfaces (web UIs, CLI, AI assistants) or where the underlying network infrastructure tools may evolve independently from the AI integration components.
+# Run the server
+cisco-nso-mcp-server
+```
 
 ## What is MCP?
 
@@ -54,99 +25,143 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 - **Framework Agnostic**: Works across multiple AI frameworks including OpenAI, Anthropic, Google Gemini, and others
 - **Interoperability**: Provides a common language for AI systems to communicate with external tools
 
-### Important Note on MCP Flexibility
+### Note on MCP Flexibility
 
-MCP and similar tool frameworks (like Smithery or OpenTools) are completely LLM-agnostic - they're simply APIs with a specific protocol. This means you can:
+Although the primary use case for MCP is integration with LLMs, MCP and similar tool frameworks (like Smithery) are LLM-agnostic - they're simply APIs with a specific protocol. This means you can:
 
 - **Use them directly** in any application without an LLM
-- **Let an LLM control them** through an integration layer (as demonstrated in this project)
+- **Let an LLM control them** through an integration layer
 - **Mix both approaches** depending on your specific needs and use cases
 
 This flexibility makes MCP tools valuable beyond just LLM applications, serving as standardized interfaces for various automation needs.
 
-In this project, MCP acts as the bridge between OpenAI's GPT models and Cisco NSO, allowing the AI to query and interact with network devices through well-defined tool interfaces.
+## Features
 
-## How MCP Handles Requests from OpenAI
+- **Stdio Transport**: By default, the server uses stdio transport for process-bound communication
+- **SSE Transport**: Optionally, the server can use SSE transport for web-bound communication
+- **Tool-First Design**: Network operations are defined as discrete tools with clear interfaces
+- **Asynchronous Processing**: All network operations are implemented asynchronously for better performance
+- **Structured Responses**: Consistent response format with status, data, and metadata sections
+- **Environment Resources**: Provides contextual information about the NSO environment
 
-1. **Tool Registration**: The MCP server registers network automation tools with clear descriptions and parameter schemas
-2. **Tool Discovery**: The client queries the MCP server for available tools and presents them to OpenAI
-3. **Parameter Extraction**: OpenAI extracts parameters from user queries (e.g., device names) based on tool descriptions
-4. **Tool Invocation**: The client receives tool calls from OpenAI and forwards them to the MCP server
-5. **Result Processing**: The MCP server executes the requested operations against Cisco NSO and returns structured results
-6. **Response Generation**: OpenAI uses the tool results to generate natural language responses
+## Available Tools and Resources
 
-## Benefits of Using MCP
+### Tools
 
-- **Separation of Concerns**: Clear separation between AI model capabilities and network automation logic
-- **Standardized Interface**: Consistent way to define and call network automation tools
-- **Enhanced Security**: The AI model never directly accesses network infrastructure
-- **Extensibility**: Easy to add new network automation capabilities without changing the client or AI integration
-- **Streaming Support**: Real-time streaming of responses for better user experience
-- **Structured Data**: Well-defined schemas for tool inputs and outputs
-- **Model Portability**: Tools built with MCP can work with different AI models without modification
-- **Reduced Vendor Lock-in**: The same tools can be used across different AI providers
-- **Future-Proof Design**: As new AI models emerge, your tools remain compatible through the MCP standard
-- **Simplified Development**: Developers can focus on tool functionality rather than AI integration details
+- `get_device_ned_ids_tool`: Retrieves Network Element Driver (NED) IDs from Cisco NSO
+- `get_device_platform_tool`: Gets platform information for a specific device in Cisco NSO
 
-### In Simple Terms
+### Resources
 
-Without MCP, developers would need to create and maintain separate integrations between each AI model and every network tool they want to use - imagine building custom connectors for every possible combination of AI systems and network tools. This quickly becomes unmanageable as your toolset grows.
-
-MCP solves this by providing a single, standardized "translator" that sits between AI models and network tools. You build each tool once, connect it to MCP, and it instantly works with any AI model that speaks the MCP language. This dramatically reduces development time, maintenance overhead, and technical complexity while making your network automation solution more flexible and future-proof.
-
-## Current Tools
-
-- `get_device_ned_ids`: Retrieves Network Element Driver (NED) IDs from Cisco NSO
-- `get_device_platform`: Gets platform information for a specific device in Cisco NSO
+- `https://cisco-nso-mcp-server.bonolab.net/resources/environment`: Provides a comprehensive summary of the NSO environment
 
 ## Requirements
 
 - Python 3.13+
 - Cisco NSO with RESTCONF API enabled
-- OpenAI API key
-- MCP library
+- Network connectivity to NSO RESTCONF API
 
-## Setup
+## Installation
 
-1. Clone the repository
+```bash
+# Install from PyPI
+pip install cisco-nso-mcp-server
 
-2. Create a `secrets.env` file with your OpenAI API key:
-
-   ```env
-   OPENAI_API_KEY=your_api_key_here
-   ```
-
-3. Ensure Cisco NSO is running and accessible via RESTCONF
+# Verify installation
+which cisco-nso-mcp-server
+```
 
 ## Usage
 
-Start the test client, with the server script path:
+### Running the Server
 
 ```bash
-python mcp_test_client.py mcp_server.py
+# Run with default NSO connection and MCP settings (see Configuration Options below for details)
+cisco-nso-mcp-server
+
+# Run with custom NSO connection parameters
+cisco-nso-mcp-server --nso-address 192.168.1.100 --nso-port 8888 --nso-username myuser --nso-password mypass
 ```
 
-You can then interact with your network infrastructure using natural language queries:
+### Configuration Options
 
-- "What NED IDs are available in NSO?"
-- "Show me the platform information for device ios-0"
+You can configure the server using command-line arguments or environment variables:
 
-## Architecture
+#### NSO Connection Parameters
 
-The system follows a client-server architecture:
+| Command-line Argument | Environment Variable | Default | Description |
+|----------------------|---------------------|---------|-------------|
+| `--nso-scheme`       | `NSO_SCHEME`        | http    | NSO connection scheme (http/https) |
+| `--nso-address`      | `NSO_ADDRESS`       | localhost | NSO server address |
+| `--nso-port`         | `NSO_PORT`          | 8080    | NSO server port |
+| `--nso-timeout`      | `NSO_TIMEOUT`       | 10      | Connection timeout in seconds |
+| `--nso-username`     | `NSO_USERNAME`      | admin   | NSO username |
+| `--nso-password`     | `NSO_PASSWORD`      | admin   | NSO password |
 
-1. **MCP Server (mcp_server.py)**:
-   - Uses FastMCP framework to define network automation tools
-   - Connects to Cisco NSO via RESTCONF
-   - Provides asynchronous tool execution
-   - Returns structured responses
+#### MCP Server Parameters
 
-2. **MCP Test Client (mcp_test_client.py)**:
-   - Connects to the MCP server via stdio transport
-   - Integrates with OpenAI's GPT-4o model
-   - Handles tool calls and parameter formatting
-   - Supports streaming responses
-   - Provides a conversational interface
+| Command-line Argument | Environment Variable | Default | Description |
+|----------------------|---------------------|---------|-------------|
+| `--transport`        | `MCP_TRANSPORT`     | stdio   | MCP transport type (stdio/sse) |
+
+#### SSE Transport Options (only used when --transport=sse)
+
+| Command-line Argument | Environment Variable | Default | Description |
+|----------------------|---------------------|---------|-------------|
+| `--host`             | `MCP_HOST`          | 0.0.0.0 | Host to bind to when using SSE transport |
+| `--port`             | `MCP_PORT`          | 8000    | Port to bind to when using SSE transport |
+
+Environment variables take precedence over default values but are overridden by command-line arguments.
+
+### Connecting to the Server
+
+#### Stdio Transport
+
+For stdio transport, you'll need to spawn the server process and communicate through stdin/stdout:
+
+```python
+from mcp import ClientSession, StdioServerParameters
+from contextlib import AsyncExitStack
+
+async def connect():
+    exit_stack = AsyncExitStack()
+    server_params = StdioServerParameters(
+        command="cisco-nso-mcp-server",
+        args=[],
+        env=None
+    )
+    
+    stdio_transport = await exit_stack.enter_async_context(stdio_client(server_params))
+    stdio, write = stdio_transport
+    session = await exit_stack.enter_async_context(ClientSession(stdio, write))
+    await session.initialize()
+    
+    # Now you can use the session to call tools and read resources
+    return session
+```
+
+#### SSE Transport
+
+For SSE transport, you can connect to the server using a standard HTTP client:
+
+```python
+from mcp import ClientSession, SSEServerParameters
+from contextlib import AsyncExitStack
+
+async def connect():
+    exit_stack = AsyncExitStack()
+    server_params = SSEServerParameters(
+        url="http://localhost:8000",
+        headers={"Authorization": "Bearer YOUR_TOKEN"}
+    )
+    
+    sse_transport = await exit_stack.enter_async_context(sse_client(server_params))
+    session = await exit_stack.enter_async_context(ClientSession(sse_transport))
+    await session.initialize()
+    
+    # Now you can use the session to call tools and read resources
+    return session
+```
 
 ## Asynchronous Implementation Details
 
@@ -156,27 +171,8 @@ The MCP server leverages Python's asynchronous programming capabilities to effic
 - **Non-blocking I/O**: Network calls to Cisco NSO are wrapped with `asyncio.to_thread()` to prevent blocking the event loop
 - **Concurrent Processing**: Multiple tool calls can be processed simultaneously without waiting for previous operations to complete
 - **Error Handling**: Asynchronous try/except blocks capture and properly format errors from network operations
-- **Performance Benefits**:
-  - Reduced latency when handling multiple requests
-  - Better resource utilization during I/O-bound operations
-  - Smoother experience for users, especially with streaming responses
-  - Ability to scale to handle more concurrent operations
 
-This asynchronous approach is particularly valuable for network automation, where operations often involve waiting for network devices to respond. By implementing tools as asynchronous functions, the server can efficiently manage multiple concurrent requests without performance degradation.
-
-## Future Enhancements
-
-- Additional NSO integration tools
-- Support for device configuration changes
-- Integration with Streamlit for web-based UI
-- Enhanced error handling and validation
-- Support for more complex network operations
-- **Centralized MCP Server Architecture**:
-  - Migration from Stdio to Server-Sent Events (SSE) transport
-  - Support for multiple concurrent clients
-  - Separate deployment of MCP server and clients
-  - Enable web-based clients like Streamlit chatbots to connect remotely
-  - Authentication and authorization for secure multi-user access
+This asynchronous approach is particularly valuable for network automation, where operations often involve waiting for network devices to respond.
 
 ## License
 
