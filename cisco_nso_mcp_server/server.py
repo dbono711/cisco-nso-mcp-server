@@ -17,12 +17,18 @@ from typing import Optional, Dict, Any
 from cisco_nso_mcp_server.utils import logger
 
 
-def register_resources(mcp, query_helper):
+def register_resources(mcp: FastMCP, query_helper: Query) -> None:
+    """
+    Register resources with the MCP server.
+    """
     @mcp.resource(
         uri="https://cisco-nso-mcp.resources/environment",
         description="NSO environment summary",
     )
-    async def nso_environment():
+    async def nso_environment() -> Dict[str, Any]:
+        """
+        Retrieve a summary of the NSO environment.
+        """
         try:
             # delegate to the service layer
             return await get_environment_summary(query_helper)
@@ -35,11 +41,17 @@ def register_resources(mcp, query_helper):
                 "error_message": str(e)
             }
 
-def register_tools(mcp, devices_helper):
+def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
+    """
+    Register tools with the MCP server.
+    """
     @mcp.tool(
         description="Retrieve platform information for a specific device in Cisco NSO. Requires a 'device_name' parameter."
     )
-    async def get_device_platform_tool(params: Dict[str, Any]):
+    async def get_device_platform_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Retrieve platform information for a specific device in Cisco NSO.
+        """
         try:
             # validate required parameters
             if not params or "device_name" not in params:
@@ -60,7 +72,10 @@ def register_tools(mcp, devices_helper):
     @mcp.tool(
         description="Retrieve the available Network Element Driver (NED) IDs in Cisco NSO"
     )
-    async def get_device_ned_ids_tool(params: Optional[Dict[str, Any]] = None):
+    async def get_device_ned_ids_tool(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Retrieve the available Network Element Driver (NED) IDs in Cisco NSO.
+        """
         try:
             # delegate to the service layer
             return await get_device_ned_ids(devices_helper)
@@ -71,7 +86,10 @@ def register_tools(mcp, devices_helper):
                 "error_message": str(e)
             }
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command-line arguments.
+    """
     parser = argparse.ArgumentParser(description="Cisco NSO MCP Server")
     
     # NSO connection parameters
@@ -110,6 +128,10 @@ def parse_args():
     return args
 
 def main():
+    """
+    Main function to run the server.
+    """
+
     # parse command line arguments
     args = parse_args()
     

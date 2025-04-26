@@ -1,13 +1,15 @@
 import logging
 
 class LoggerFactory:
-    """Factory class for creating and configuring loggers."""
+    """
+    Factory class for creating and configuring loggers.
+    """
 
     # Dictionary to store created loggers
     _loggers = {}
 
     @staticmethod
-    def __create_logger(log_file, log_level):
+    def __create_logger(log_file: str, log_level: str) -> logging.Logger:
         """
         A private method that interacts with the python
         logging module to create a configured logger.
@@ -44,7 +46,7 @@ class LoggerFactory:
         return logger
 
     @staticmethod
-    def get_logger(log_file, log_level="INFO"):
+    def get_logger(log_file: str, log_level: str = "INFO") -> logging.Logger:
         """
         A static method called by other modules to initialize logger in
         their own module.

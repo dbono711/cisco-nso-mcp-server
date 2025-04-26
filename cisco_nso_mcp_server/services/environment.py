@@ -1,8 +1,13 @@
 import asyncio
 from datetime import datetime
 from cisco_nso_mcp_server.utils import logger
+from cisco_nso_restconf.query import Query
+from typing import Dict, Any, List
 
-async def get_environment_summary(query_helper):
+async def get_environment_summary(query_helper: Query) -> Dict[str, Any]:
+    """
+    Retrieve a summary of the NSO environment.
+    """
     try:
         logger.info("Retrieving environment data from NSO")
         
@@ -35,7 +40,11 @@ async def get_environment_summary(query_helper):
         logger.error(f"Error retrieving environment data: {str(e)}")
         raise ValueError(f"Failed to retrieve NSO environment: {str(e)}")
 
-def _process_device_data(device_platforms):
+def _process_device_data(device_platforms: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """
+    Process raw device platform data into a structured dictionary.
+    """
+
     # build device dictionary
     devices = {}
     for device_entry in device_platforms:
@@ -60,7 +69,11 @@ def _process_device_data(device_platforms):
 
     return devices
 
-def _generate_insights(devices):
+def _generate_insights(devices: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Generate insights from the device data.
+    """
+
     # generate insights from the device data
     insights = {}
         
