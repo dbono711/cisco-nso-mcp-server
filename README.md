@@ -53,7 +53,14 @@ This flexibility makes MCP tools valuable beyond just LLM applications, serving 
 
 ### Resources
 
-- `https://cisco-nso-mcp-server.bonolab.net/resources/environment`: Provides a comprehensive summary of the NSO environment
+- `https://cisco-nso-mcp.resources/environment`: Provides a comprehensive summary of the NSO environment:
+  - Device count
+  - Operating System Distribution
+  - Unique Operating System Count
+  - Unique Model Count
+  - Model Distribution
+  - Device Series Distribution
+
 
 ## Requirements
 

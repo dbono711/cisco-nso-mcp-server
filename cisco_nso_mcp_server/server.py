@@ -19,7 +19,7 @@ from cisco_nso_mcp_server.utils import logger
 
 def register_resources(mcp, query_helper):
     @mcp.resource(
-        uri="https://cisco-nso-mcp-server.bonolab.net/resources/environment",
+        uri="https://cisco-nso-mcp.resources/environment",
         description="NSO environment summary",
     )
     async def nso_environment():
