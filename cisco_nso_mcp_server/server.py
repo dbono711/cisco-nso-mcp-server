@@ -17,12 +17,12 @@ from typing import Optional, Dict, Any
 from cisco_nso_mcp_server.utils import logger
 
 
-def register_resources(mcp: FastMCP, query_helper: Query) -> None:
+def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Devices) -> None:
     """
     Register resources with the MCP server.
     """
     @mcp.resource(
-        uri="https://cisco-nso-mcp.resources/environment",
+        uri="https://resources.cisco-nso-mcp.io/environment",
         description="NSO environment summary",
     )
     async def nso_environment() -> Dict[str, Any]:
@@ -31,7 +31,7 @@ def register_resources(mcp: FastMCP, query_helper: Query) -> None:
         """
         try:
             # delegate to the service layer
-            return await get_environment_summary(query_helper)
+            return await get_environment_summary(query_helper, devices_helper)
             
         except Exception as e:
             logger.error(f"Resource error: {str(e)}")
@@ -160,7 +160,7 @@ def main():
     query_helper = Query(client)
 
     # register resources
-    register_resources(mcp, query_helper)
+    register_resources(mcp, query_helper, devices_helper)
     register_tools(mcp, devices_helper)
 
     # run the server with the specified transport

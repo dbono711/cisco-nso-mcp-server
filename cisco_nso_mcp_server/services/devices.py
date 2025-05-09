@@ -1,10 +1,9 @@
 import asyncio
-import json
-from datetime import datetime
 from cisco_nso_mcp_server.utils import logger
 from requests.exceptions import RequestException
 from cisco_nso_restconf.devices import Devices
 from typing import Dict, Any
+
 
 async def get_device_platform(devices_helper: Devices, device_name: str) -> Dict[str, Any]:
     """
@@ -19,16 +18,7 @@ async def get_device_platform(devices_helper: Devices, device_name: str) -> Dict
             devices_helper.get_device_platform, 
             device_name
         )
-        response = {
-            "status": "success",
-            "data": {
-                "device_platform": device_platform
-            },
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "device": device_name
-            }
-        }
+        response = device_platform
         logger.info(f"Successfully retrieved platform for device: {device_name}")
 
         return response
@@ -44,17 +34,8 @@ async def get_device_ned_ids(devices_helper: Devices) -> Dict[str, Any]:
     try:
         # get device NED IDs using asyncio.to_thread since it's a bound method
         device_ned_ids = await asyncio.to_thread(devices_helper.get_device_ned_ids)
-        response = {
-            "status": "success",
-            "data": {
-                "device_ned_ids": device_ned_ids
-            },
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "count": len(device_ned_ids)
-            }
-        }
-        logger.info(f"Successfully retrieved NED IDs: {json.dumps(response, indent=2)}")
+        response = device_ned_ids
+        logger.info("Successfully retrieved NED IDs")
 
         return response
             
