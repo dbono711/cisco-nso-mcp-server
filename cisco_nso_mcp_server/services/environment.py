@@ -1,44 +1,9 @@
 import asyncio
-from datetime import datetime
 from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.query import Query
+from cisco_nso_restconf.devices import Devices
 from typing import Dict, Any, List
 
-async def get_environment_summary(query_helper: Query) -> Dict[str, Any]:
-    """
-    Retrieve a summary of the NSO environment.
-    """
-    try:
-        logger.info("Retrieving environment data from NSO")
-        
-        # Query device platforms
-        device_platforms = await asyncio.to_thread(query_helper.query_device_platform)
-        
-        # Process raw data into structured format
-        devices = _process_device_data(device_platforms)
-        
-        # generate insights from device data
-        insights = _generate_insights(devices)
-        
-        # format the response
-        response = {
-            "status": "success",
-            "data": {
-                "insights": insights
-            },
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "summary": f"Environment contains {len(devices)} devices across {len(insights.get('os_distribution', {}))} operating systems"
-            }
-        }
-        
-        logger.info("Successfully generated environment summary")
-
-        return response
-        
-    except Exception as e:
-        logger.error(f"Error retrieving environment data: {str(e)}")
-        raise ValueError(f"Failed to retrieve NSO environment: {str(e)}")
 
 def _process_device_data(device_platforms: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
@@ -69,7 +34,7 @@ def _process_device_data(device_platforms: List[Dict[str, Any]]) -> Dict[str, Di
 
     return devices
 
-def _generate_insights(devices: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+def _generate_insights(devices: Dict[str, Dict[str, Any]], device_groups: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     """
     Generate insights from the device data.
     """
@@ -121,5 +86,51 @@ def _generate_insights(devices: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
             series_counts[series] = series_counts.get(series, 0) + 1
         
     insights["series_distribution"] = series_counts
+
+    # process device groups data
+    if device_groups and "tailf-ncs:device-group" in device_groups:
+        processed_groups = []
+        
+        for group in device_groups["tailf-ncs:device-group"]:
+            # Create a simplified group object with only the required fields
+            processed_group = {
+                "name": group.get("name", ""),
+                "member": group.get("member", []),
+                "ned-id": group.get("ned-id", [])
+            }
+            processed_groups.append(processed_group)
+            
+        insights["device_groups"] = processed_groups
+        insights["device_group_count"] = len(processed_groups)
+    else:
+        insights["device_groups"] = []
+        insights["device_group_count"] = 0
     
     return insights
+
+async def get_environment_summary(query_helper: Query, devices_helper: Devices) -> Dict[str, Any]:
+    """
+    Retrieve a summary of the NSO environment.
+    """
+    try:
+        logger.info("Retrieving environment data from NSO")
+        
+        # query device platforms
+        device_platforms = await asyncio.to_thread(query_helper.query_device_platform)
+        
+        # query device groups
+        device_groups = await asyncio.to_thread(devices_helper.get_device_groups)
+        
+        # process raw device platform data into structured format
+        devices = _process_device_data(device_platforms)
+        
+        # generate insights from device data
+        insights = _generate_insights(devices, device_groups)
+        response = insights
+        logger.info("Successfully generated environment summary")
+
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error retrieving environment data: {str(e)}")
+        raise ValueError(f"Failed to retrieve NSO environment: {str(e)}")
