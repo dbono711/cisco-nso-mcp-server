@@ -60,7 +60,7 @@ This flexibility makes MCP tools valuable beyond just LLM applications, serving 
   - Unique Model Count
   - Model Distribution
   - Device Series Distribution
-
+  - Device Groups and Members
 
 ## Requirements
 
@@ -118,6 +118,12 @@ You can configure the server using command-line arguments or environment variabl
 | `--host`             | `MCP_HOST`          | 0.0.0.0 | Host to bind to when using SSE transport |
 | `--port`             | `MCP_PORT`          | 8000    | Port to bind to when using SSE transport |
 
+#### Logging Configuration
+
+| Environment Variable | Default | Description |
+|---------------------|---------|-------------|
+| `LOG_FILE`          | None    | Path to log file. If not set, logs will be sent to stdout only |
+
 Environment variables take precedence over default values but are overridden by command-line arguments.
 
 ### Connecting to the Server
@@ -127,6 +133,7 @@ Environment variables take precedence over default values but are overridden by 
 For stdio transport, you'll need to spawn the server process and communicate through stdin/stdout:
 
 ```python
+import os
 from mcp import ClientSession, StdioServerParameters
 from contextlib import AsyncExitStack
 
@@ -135,7 +142,8 @@ async def connect():
     server_params = StdioServerParameters(
         command="cisco-nso-mcp-server",
         args=[],
-        env=None
+        # Pass current environment variables to ensure LOG_FILE and other env vars are available
+        env={**os.environ}
     )
     
     stdio_transport = await exit_stack.enter_async_context(stdio_client(server_params))
@@ -170,7 +178,9 @@ async def connect():
     return session
 ```
 
-## Asynchronous Implementation Details
+## Implementation Details
+
+### Asynchronous Processing
 
 The MCP server leverages Python's asynchronous programming capabilities to efficiently handle network operations:
 
@@ -178,6 +188,18 @@ The MCP server leverages Python's asynchronous programming capabilities to effic
 - **Non-blocking I/O**: Network calls to Cisco NSO are wrapped with `asyncio.to_thread()` to prevent blocking the event loop
 - **Concurrent Processing**: Multiple tool calls can be processed simultaneously without waiting for previous operations to complete
 - **Error Handling**: Asynchronous try/except blocks capture and properly format errors from network operations
+
+### Logging System
+
+The server uses a flexible logging system that can be configured through environment variables:
+
+- **Default Behavior**: By default, logs are sent to stdout only
+- **File Logging**: When the `LOG_FILE` environment variable is set, logs are sent to both stdout and the specified file
+- **Error Handling**: If the log file cannot be created or written to, the server falls back to stdout-only logging with an error message
+- **Log Format**: Logs include timestamp, level, and message in a consistent format
+- **Log Levels**: Supports standard Python logging levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+This approach ensures that the server can run in various environments without permission issues, while still providing flexible logging options.
 
 ## License
 

@@ -5,6 +5,7 @@ Sample STDIO client for Cisco NSO MCP Server
 This script demonstrates how to connect to the MCP server and list available tools.
 """
 import asyncio
+import os
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -16,7 +17,7 @@ async def main():
     server_params = StdioServerParameters(
         command="cisco-nso-mcp-server",
         args=[],
-        env=None
+        env={**os.environ}
     )
 
     # create and enter the context managers directly in this task
