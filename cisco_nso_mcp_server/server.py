@@ -20,6 +20,15 @@ from cisco_nso_mcp_server.utils import logger
 def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Devices) -> None:
     """
     Register resources with the MCP server.
+    
+    This function registers all available resources with the MCP server,
+    including the NSO environment summary resource that provides information
+    about the network devices managed by NSO.
+    
+    Args:
+        mcp: The FastMCP server instance to register resources with
+        query_helper: The Query helper for interacting with NSO
+        devices_helper: The Devices helper for interacting with NSO devices
     """
     @mcp.resource(
         uri="https://resources.cisco-nso-mcp.io/environment",
@@ -27,7 +36,14 @@ def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Device
     )
     async def nso_environment() -> Dict[str, Any]:
         """
-        Retrieve a summary of the NSO environment.
+        This resource provides a summary of the NSO environment, including
+        the number of devices managed by NSO, the distribution of operating
+        systems, the number of device groups, and the distribution of device
+        models.
+
+        Returns:
+            A dictionary containing summary information about the NSO
+            environment.
         """
         try:
             # delegate to the service layer
@@ -42,15 +58,32 @@ def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Device
             }
 
 def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
-    """
-    Register tools with the MCP server.
+    """    
+    This function registers all available tools with the MCP server,
+    including the get_device_platform tool that retrieves platform information
+    for a specific device in Cisco NSO.
+    
+    Args:
+        mcp: The FastMCP server instance to register tools with
+        devices_helper: The Devices helper for interacting with NSO devices
     """
     @mcp.tool(
         description="Retrieve platform information for a specific device in Cisco NSO. Requires a 'device_name' parameter."
     )
     async def get_device_platform_tool(params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Retrieve platform information for a specific device in Cisco NSO.
+        This tool takes a single parameter, 'device_name', which is the name of
+        the device for which to retrieve platform information. The response will
+        include the platform name, platform version, and model information for
+        the specified device.
+
+        Args:
+            params (Dict[str, Any]): A dictionary containing the 'device_name'
+                parameter.
+
+        Returns:
+            A dictionary containing the platform information for the specified
+            device.
         """
         try:
             # validate required parameters
@@ -74,7 +107,14 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
     )
     async def get_device_ned_ids_tool(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Retrieve the available Network Element Driver (NED) IDs in Cisco NSO.
+        This tool retrieves the available Network Element Driver (NED) IDs in
+        Cisco NSO. The response will include a list of available NED IDs.
+
+        Args:
+            params (Optional[Dict[str, Any]], optional): Unused parameter. Defaults to None.
+
+        Returns:
+            A dictionary containing a list of available NED IDs.
         """
         try:
             # delegate to the service layer
