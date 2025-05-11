@@ -38,7 +38,6 @@ This flexibility makes MCP tools valuable beyond just LLM applications, serving 
 ## Features
 
 - **Stdio Transport**: By default, the server uses stdio transport for process-bound communication
-- **SSE Transport**: Optionally, the server can use SSE transport for web-bound communication
 - **Tool-First Design**: Network operations are defined as discrete tools with clear interfaces
 - **Asynchronous Processing**: All network operations are implemented asynchronously for better performance
 - **Structured Responses**: Consistent response format with status, data, and metadata sections
@@ -64,7 +63,7 @@ This flexibility makes MCP tools valuable beyond just LLM applications, serving 
 
 ## Requirements
 
-- Python 3.13+
+- Python 3.12+
 - Cisco NSO with RESTCONF API enabled
 - Network connectivity to NSO RESTCONF API
 
@@ -111,7 +110,7 @@ You can configure the server using command-line arguments or environment variabl
 |----------------------|---------------------|---------|-------------|
 | `--transport`        | `MCP_TRANSPORT`     | stdio   | MCP transport type (stdio/sse) |
 
-#### SSE Transport Options (only used when --transport=sse)
+#### SSE Transport Options (only used when --transport=sse) (IN DEVELOPMENT)
 
 | Command-line Argument | Environment Variable | Default | Description |
 |----------------------|---------------------|---------|-------------|
@@ -126,11 +125,42 @@ You can configure the server using command-line arguments or environment variabl
 
 Environment variables take precedence over default values but are overridden by command-line arguments.
 
-### Connecting to the Server
+### Connecting to the Server with MCP Client
 
-#### Stdio Transport
+You can connect to the server using any MCP client that supports the selected transport type.
 
-For stdio transport, you'll need to spawn the server process and communicate through stdin/stdout:
+#### Using with Windsurf IDE Cascade
+
+Windsurf IDE Cascade [supports MCP servers](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) through a configuration file. To use the Cisco NSO MCP server with Windsurf, add it to your `mcp_config.json` file:
+
+```json
+{
+  "mcpServers": {
+    "nso": {
+      "command": "/path/to/your/env/bin/cisco-nso-mcp-server",
+      "args": [
+        "--nso-address=127.0.0.1",
+        "--nso-port=8080",
+        "--nso-username=admin",
+        "--nso-password=admin"
+      ],
+      "env": {
+        "LOG_FILE": "/path/to/your/logs/nso-mcp.log"
+      }
+    }
+  }
+}
+```
+
+Replace `/path/to/your/env/bin/cisco-nso-mcp-server` with the actual path where you [installed the package with pip](#installation). You can find this by running `which cisco-nso-mcp-server` if you installed it in your main environment, or by locating it in your virtual environment's bin directory.
+
+The `env` section is optional. If you include it, you can specify the `LOG_FILE` environment variable to enable file logging.
+
+At this point you can restart Windsurf and you should see it appear in the list of MCP servers with the list of available tools
+
+#### Using in a custom MCP client Python application with stdio transport
+
+For stdio transport in a Python application, you'll need to spawn the server process and communicate through stdin/stdout:
 
 ```python
 import os
@@ -141,7 +171,12 @@ async def connect():
     exit_stack = AsyncExitStack()
     server_params = StdioServerParameters(
         command="cisco-nso-mcp-server",
-        args=[],
+        args=[
+            "--nso-address=127.0.0.1",
+            "--nso-port=8080",
+            "--nso-username=admin",
+            "--nso-password=admin"
+        ],
         # Pass current environment variables to ensure LOG_FILE and other env vars are available
         env={**os.environ}
     )
@@ -149,29 +184,6 @@ async def connect():
     stdio_transport = await exit_stack.enter_async_context(stdio_client(server_params))
     stdio, write = stdio_transport
     session = await exit_stack.enter_async_context(ClientSession(stdio, write))
-    await session.initialize()
-    
-    # Now you can use the session to call tools and read resources
-    return session
-```
-
-#### SSE Transport
-
-For SSE transport, you can connect to the server using a standard HTTP client:
-
-```python
-from mcp import ClientSession, SSEServerParameters
-from contextlib import AsyncExitStack
-
-async def connect():
-    exit_stack = AsyncExitStack()
-    server_params = SSEServerParameters(
-        url="http://localhost:8000",
-        headers={"Authorization": "Bearer YOUR_TOKEN"}
-    )
-    
-    sse_transport = await exit_stack.enter_async_context(sse_client(server_params))
-    session = await exit_stack.enter_async_context(ClientSession(sse_transport))
     await session.initialize()
     
     # Now you can use the session to call tools and read resources
