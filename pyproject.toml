@@ -1,6 +1,6 @@
 [project]
 name = "cisco-nso-mcp-server"
-version = "1.1.1"
+version = "1.1.2"
 license = "MIT"
 description = "Cisco NSO MCP Server"
 readme = "README.md"
