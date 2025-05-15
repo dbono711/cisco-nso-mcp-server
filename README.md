@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Ser
 
 ## Overview
 
-This package provides a standalone MCP server for Cisco NSO, written in Python, that exposes capabilities in Cisco NSO as MCP tools and resources that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-client).
+This package provides a standalone MCP server for Cisco NSO that exposes capabilities in Cisco NSO as MCP tools and resources that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-client).
 
 ## What is MCP?
 
@@ -29,19 +29,16 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 ### Tools
 
-- `get_device_ned_ids_tool`: Retrieves Network Element Driver (NED) IDs from Cisco NSO
-- `get_device_platform_tool`: Gets platform information for a specific device in Cisco NSO. Requires a device name as an argument.
+| Tool Name | Description | Inputs | Returns |
+| --- | --- | --- | --- |
+| `get_device_ned_ids_tool` | Retrieves Network Element Driver (NED) IDs from Cisco NSO |  | A dictionary with a list of NED IDs |
+| `get_device_platform_tool` | Gets platform information for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with platform information for the specified device |
+| `get_device_config_tool` | Gets full configuration for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with configuration for the specified device |
 
 ### Resources
 
 - `https://resources.cisco-nso-mcp.io/environment`: Provides a comprehensive summary of the NSO environment:
-  - Device count
-  - Operating System Distribution
-  - Unique Operating System Count
-  - Unique Model Count
-  - Model Distribution
-  - Device Series Distribution
-  - Device Groups and Members
+  - _Device count, Operating System Distribution, Unique Operating System Count, Unique Model Count, Model Distribution, Device Series Distribution, Device Groups and Members_
 
 ## Requirements
 
@@ -89,11 +86,13 @@ Environment variables take precedence over default values but are overridden by 
 
 ### Connecting to the Server with MCP Client
 
-You can connect to the server using any MCP client that supports the selected transport type.
+You can connect to the server using any MCP client that supports the selected transport type. A few options are:
 
-### Using with Windsurf IDE Cascade
+### Using with Windsurf Cascade
 
-Windsurf IDE Cascade [supports MCP servers](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) through a configuration file. To use the Cisco NSO MCP server with Windsurf, add it to your `mcp_config.json` file.
+Windsurf Cascade [supports MCP servers](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) through a configuration file. To use the Cisco NSO MCP server with Windsurf, add it to your `mcp_config.json` file.
+
+**NOTE: Windsurf Cascade only supports MCP tools as of now.**
 
 #### Using uv (recommended)
 
@@ -118,6 +117,8 @@ When using uv, no specific installation is needed. You can use `uvx` to directly
   }
 }
 ```
+
+The `env` section is optional. If you include it, you can specify the `LOG_FILE` environment variable to enable file logging.
 
 #### Using with pip installation
 
@@ -232,8 +233,6 @@ The server uses a flexible logging system that can be configured through environ
 - **Error Handling**: If the log file cannot be created or written to, the server falls back to stdout-only logging with an error message
 - **Log Format**: Logs include timestamp, level, and message in a consistent format
 
-This approach ensures that the server can run in various environments without permission issues, while still providing flexible logging options.
-
 ## License
 
-[MIT License](LICENSE)
+This project is licensed under the [MIT License](LICENSE). This means you can use, modify, and distribute the code, subject to the terms and conditions of the MIT License.
