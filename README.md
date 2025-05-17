@@ -1,14 +1,14 @@
 # Cisco NSO MCP Server
 
-A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Services Orchestrator)](https://www.cisco.com/site/us/en/products/networking/software/crosswork-network-services-orchestrator/index.html) that enables AI-powered network automation through natural language interactions.
+A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Services Orchestrator)](https://www.cisco.com/site/us/en/products/networking/software/crosswork-network-services-orchestrator/index.html) that exposes NSO data and operations as MCP primitives (Tools, Resources, etc.) that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-client), enabling AI-powered network automation through natural language interactions.
 
-## Overview
+## Example (custom client that integrates this MCP server with OpenAI in a Streamlit-based chat interface)
 
-This package provides a standalone MCP server for Cisco NSO that exposes capabilities in Cisco NSO as MCP tools and resources that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-client).
+![demo](./demos/client.gif)
 
 ## What is MCP?
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that standardizes how AI models interact with external tools and services. MCP enables:
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that standardizes how AI models interact with external tools and services. MCP enables:
 
 - **Tool Definition**: Structured way to define tools that AI models can use
 - **Tool Discovery**: Mechanism for models to discover available tools
@@ -24,6 +24,9 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 - **Asynchronous Processing**: All network operations are implemented asynchronously for better performance
 - **Structured Responses**: Consistent response format with status, data, and metadata sections
 - **Environment Resources**: Provides contextual information about the NSO environment
+- **NSO Integration**: Uses [cisco-nso-restconf](https://github.com/dbono711/cisco-nso-restconf) library for a clean, Pythonic interface to NSO's RESTCONF API
+- **Flexible Logging**: Configurable logging to stdout and/or file via environment variables. When the `LOG_FILE` environment variable is set, logs are sent to both stdout and the specified file. If the log file cannot be created or written to, the server falls back to stdout-only logging with an error message
+- **Multiple Client Support**: Works with any MCP-compatible client including Windsurf Cascade and custom Python applications
 
 ## Available Tools and Resources
 
@@ -37,7 +40,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 ### Resources
 
-- `https://resources.cisco-nso-mcp.io/environment`: Provides a comprehensive summary of the NSO environment:
+- `https://resources.cisco-nso-mcp.io/environment`: Provides a curated summary of the NSO environment:
   - _Device count, Operating System Distribution, Unique Operating System Count, Unique Model Count, Model Distribution, Device Series Distribution, Device Groups and Members_
 
 ## Requirements
@@ -82,17 +85,15 @@ You can configure the server using command-line arguments or environment variabl
 
 Environment variables take precedence over default values but are overridden by command-line arguments.
 
-## Usage
-
-### Connecting to the Server with MCP Client
+## Connecting to the Server with MCP Clients
 
 You can connect to the server using any MCP client that supports the selected transport type. A few options are:
 
-### Using with Windsurf Cascade
+### Windsurf Cascade
 
 Windsurf Cascade [supports MCP servers](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) through a configuration file. To use the Cisco NSO MCP server with Windsurf, add it to your `mcp_config.json` file.
 
-**NOTE: Windsurf Cascade only supports MCP tools as of now.**
+**NOTE: Windsurf Cascade only [supports MCP tools](https://docs.windsurf.com/windsurf/cascade/mcp#notes) as of now.**
 
 #### Using uv (recommended)
 
@@ -153,43 +154,13 @@ Replace `/path/to/your/env/bin/cisco-nso-mcp-server` with the actual path where 
 
 The `env` section is optional. If you include it, you can specify the `LOG_FILE` environment variable to enable file logging.
 
-At this point you can restart Windsurf and you should see it appear in the list of MCP servers with the list of available tools
-
 ### Using in a custom MCP client Python application with stdio transport
 
-For stdio transport in a Python application, you'll need to spawn the server process and communicate through stdin/stdout:
+A sample Python application is provided in [sample_stdio_client.py](./sample_stdio_client.py).
 
-```python
-import os
-from mcp import ClientSession, StdioServerParameters
-from contextlib import AsyncExitStack
+## Running the Server as Standalone
 
-async def connect():
-    exit_stack = AsyncExitStack()
-    server_params = StdioServerParameters(
-        command="cisco-nso-mcp-server",
-        args=[
-            "--nso-address=127.0.0.1",
-            "--nso-port=8080",
-            "--nso-username=admin",
-            "--nso-password=admin"
-        ],
-        # Pass current environment variables to ensure LOG_FILE and other env vars are available
-        env={**os.environ}
-    )
-    
-    stdio_transport = await exit_stack.enter_async_context(stdio_client(server_params))
-    stdio, write = stdio_transport
-    session = await exit_stack.enter_async_context(ClientSession(stdio, write))
-    await session.initialize()
-    
-    # Now you can use the session to call tools and read resources
-    return session
-```
-
-### Running the Server as Standalone
-
-While the server is typically used with an MCP client as shown above, you can also run it directly as a standalone process:
+While the server is typically used with an [MCP client](#connecting-to-the-server-with-mcp-clients), you can also run it directly as a standalone process:
 
 ```bash
 # Run with default NSO connection and MCP settings (see Configuration Options above for details)
@@ -199,39 +170,7 @@ cisco-nso-mcp-server
 cisco-nso-mcp-server --nso-address 192.168.1.100 --nso-port 8888 --nso-username myuser --nso-password mypass
 ```
 
-When running in standalone mode with stdio transport, you'll need to pipe input/output to the process or use it with an MCP client that supports stdio transport.
-
-## Implementation Details
-
-### Asynchronous Processing
-
-The MCP server leverages Python's asynchronous programming capabilities to efficiently handle network operations:
-
-- **Async Function Definitions**: All tool functions are defined with `async def` to make them coroutines
-- **Non-blocking I/O**: Network calls to Cisco NSO are wrapped with `asyncio.to_thread()` to prevent blocking the event loop
-- **Concurrent Processing**: Multiple tool calls can be processed simultaneously without waiting for previous operations to complete
-- **Error Handling**: Asynchronous try/except blocks capture and properly format errors from network operations
-
-### NSO Integration with cisco-nso-restconf
-
-This MCP server uses the [cisco-nso-restconf](https://github.com/dbono711/cisco-nso-restconf) Python library to facilitate communication with Cisco NSO:
-
-- **Simplified API**: The library provides a clean, Pythonic interface to NSO's RESTCONF API
-- **Authentication**: Handles HTTP Basic authentication with NSO automatically
-- **Error Handling**: Provides meaningful error messages for NSO-specific errors
-- **Data Conversion**: Converts between JSON and NSO's YANG data models
-- **Session Management**: Maintains persistent connections to improve performance
-
-The library abstracts away the complexities of direct RESTCONF API calls, allowing the MCP server to focus on implementing the MCP protocol and tool definitions rather than low-level HTTP and data format details.
-
-### Logging System
-
-The server uses a flexible logging system that can be configured through environment variables:
-
-- **Default Behavior**: By default, logs are sent to stdout only
-- **File Logging**: When the `LOG_FILE` environment variable is set, logs are sent to both stdout and the specified file
-- **Error Handling**: If the log file cannot be created or written to, the server falls back to stdout-only logging with an error message
-- **Log Format**: Logs include timestamp, level, and message in a consistent format
+When running as a standalone process with stdio transport, you'll need to pipe input/output to the process or use it with an MCP client that supports stdio transport.
 
 ## License
 
