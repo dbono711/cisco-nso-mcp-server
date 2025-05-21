@@ -6,38 +6,33 @@ This script demonstrates how to connect to the MCP server and list available too
 """
 import asyncio
 import os
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from fastmcp import Client
+from fastmcp.client.transports import PythonStdioTransport
 
 
 async def main():
     print("Connecting to MCP server...")
 
     # create server parameters
-    server_params = StdioServerParameters(
-        command="cisco-nso-mcp-server",
+    server_params = PythonStdioTransport(
+        python_cmd="python3",
+        script_path="cisco_nso_mcp_server/server.py",
         args=[],
         env={**os.environ}
     )
 
     # create and enter the context managers directly in this task
-    async with stdio_client(server_params) as (read_stream, write_stream):
-        async with ClientSession(read_stream, write_stream) as session:
+    async with Client(server_params) as client:
+        # list available tools
+        tools = await client.list_tools()
+        print("\nAvailable tools:")
+        for tool in tools:
+            print(f"- {tool.name}: {tool.description}")
 
-            # initialize the session
-            await session.initialize()
-
-            # list available tools
-            tools_response = await session.list_tools()
-            print("\nAvailable tools:")
-            for tool in tools_response.tools:
-                print(f"- {tool.name}: {tool.description}")
-
-            ned_response = await session.call_tool("get_device_ned_ids_tool")
-            print("\nNED IDs:")
-            print(ned_response.content[0].text)
-
-            print("\nTest completed successfully!")
+        # call a tool
+        ned_response = await client.call_tool("get_device_ned_ids")
+        print("\nNED IDs:")
+        print(ned_response[0].text)
 
 if __name__ == "__main__":
     asyncio.run(main())

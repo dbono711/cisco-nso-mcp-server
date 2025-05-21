@@ -1,3 +1,9 @@
+"""
+Cisco NSO MCP Server - Environment Service
+
+This module implements a Model Context Protocol (MCP) server that provides
+network automation tools for interacting with Cisco NSO via RESTCONF.
+"""
 import asyncio
 from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.query import Query
