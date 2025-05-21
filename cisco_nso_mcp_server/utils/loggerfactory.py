@@ -1,3 +1,9 @@
+"""
+Cisco NSO MCP Server - Logger Factory
+
+This module implements a Model Context Protocol (MCP) server that provides
+network automation tools for interacting with Cisco NSO via RESTCONF.
+"""
 import logging
 import os
 from typing import Dict

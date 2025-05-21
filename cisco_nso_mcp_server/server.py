@@ -7,14 +7,14 @@ network automation tools for interacting with Cisco NSO via RESTCONF.
 """
 import argparse
 import os
+from typing import Any, Dict, Optional
+from cisco_nso_mcp_server.services.devices import get_device_config, get_device_ned_ids, get_device_platform
+from cisco_nso_mcp_server.services.environment import get_environment_summary
+from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.client import NSORestconfClient
 from cisco_nso_restconf.devices import Devices
 from cisco_nso_restconf.query import Query
-from mcp.server.fastmcp import FastMCP
-from cisco_nso_mcp_server.services.environment import get_environment_summary
-from cisco_nso_mcp_server.services.devices import get_device_platform, get_device_config, get_device_ned_ids
-from typing import Optional, Dict, Any
-from cisco_nso_mcp_server.utils import logger
+from fastmcp import FastMCP
 
 
 def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Devices) -> None:
@@ -58,17 +58,25 @@ def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Device
             }
 
 def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
-    """    
+    """
+    Register tools with the MCP server.
+    
     This function registers all available tools with the MCP server,
-    including the get_device_platform tool that retrieves platform information
-    for a specific device in Cisco NSO.
+    including tools for retrieving device platform information, device configuration,
+    and Network Element Driver (NED) IDs from Cisco NSO.
     
     Args:
         mcp: The FastMCP server instance to register tools with
         devices_helper: The Devices helper for interacting with NSO devices
     """
     @mcp.tool(
-        description="Retrieve platform information for a specific device in Cisco NSO. Requires a 'device_name' parameter."
+        name="get_device_platform",
+        description="Retrieve platform information for a specific device in Cisco NSO. Requires a 'device_name' parameter.",
+        tags={"devices", "platform"},
+        annotations={
+            "title": "Get Device Platform Information",
+            "readOnlyHint": True
+        }
     )
     async def get_device_platform_tool(params: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -103,7 +111,13 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
             }
     
     @mcp.tool(
-        description="Retrieve the full configuration for a specific device in Cisco NSO. Requires a 'device_name' parameter."
+        name="get_device_config",
+        description="Retrieve the full configuration for a specific device in Cisco NSO. Requires a 'device_name' parameter.",
+        tags={"devices", "config"},
+        annotations={
+            "title": "Get Device Configuration",
+            "readOnlyHint": True
+        }
     )
     async def get_device_config_tool(params: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -124,7 +138,13 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
             }
     
     @mcp.tool(
-        description="Retrieve the available Network Element Driver (NED) IDs in Cisco NSO"
+        name="get_device_ned_ids",
+        description="Retrieve the available Network Element Driver (NED) IDs in Cisco NSO",
+        tags={"devices", "neds"},
+        annotations={
+            "title": "Get Device NED ID's",
+            "readOnlyHint": True
+        }
     )
     async def get_device_ned_ids_tool(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -149,7 +169,31 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
 
 def parse_args() -> argparse.Namespace:
     """
-    Parse command-line arguments.
+    Parse command line arguments for the Cisco NSO MCP Server.
+
+    This function parses the command line arguments and returns a Namespace object
+    containing the parsed values.
+
+    The following options are available:
+
+    NSO Connection Options:
+        --nso-scheme: NSO connection scheme (default: http)
+        --nso-address: NSO server address (default: localhost)
+        --nso-port: NSO server port (default: 8080)
+        --nso-timeout: NSO connection timeout in seconds (default: 10)
+        --nso-username: NSO username (default: admin)
+        --nso-password: NSO password (default: admin)
+
+    MCP Server Options:
+        --transport: MCP transport type (default: stdio)
+            Choices: stdio, sse
+
+    SSE Transport Options (only used when --transport=sse):
+        --host: Host to bind to when using SSE transport (default: 0.0.0.0)
+        --port: Port to bind to when using SSE transport (default: 8000)
+
+    Returns:
+        A Namespace object containing the parsed values.
     """
     parser = argparse.ArgumentParser(description="Cisco NSO MCP Server")
     
@@ -196,14 +240,8 @@ def main():
     # parse command line arguments
     args = parse_args()
     
-    # initialize FastMCP server with configurable parameters
-    mcp = FastMCP(
-        "nso-mcp", 
-        version="0.1.0", 
-        description="Cisco NSO MCP Server",
-        host=args.host if args.transport == "sse" else "0.0.0.0",
-        port=args.port if args.transport == "sse" else 8000
-    )
+    # initialize FastMCP server
+    mcp = FastMCP(name="nso-mcp")
     
     # initialize NSO client with configurable parameters
     client = NSORestconfClient(
@@ -217,20 +255,22 @@ def main():
     logger.info("NSORestconfClient initialized")
 
     # initialize NSO client helpers
-    devices_helper = Devices(client)
-    query_helper = Query(client)
+    devices_helper = Devices(client) # devices helper
+    query_helper = Query(client) # query helper
 
-    # register resources
-    register_resources(mcp, query_helper, devices_helper)
-    register_tools(mcp, devices_helper)
+    # register resources and tools
+    register_resources(mcp, query_helper, devices_helper) # register resources
+    register_tools(mcp, devices_helper) # register tools
 
-    # run the server with the specified transport
+    # run the server with stdio transport
     if args.transport == "stdio":
         logger.info("🚀 Starting Model Context Protocol (MCP) NSO Server with stdio transport")
         mcp.run(transport='stdio')
+    
+    # run the server with SSE transport
     elif args.transport == "sse":
         logger.info(f"🚀 Starting Model Context Protocol (MCP) NSO Server with SSE transport on {args.host}:{args.port}")
-        mcp.run(transport='sse')
+        mcp.run(transport='sse', host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
