@@ -10,11 +10,12 @@ import os
 from typing import Any, Dict, Optional
 from cisco_nso_mcp_server.services.devices import get_device_config, get_device_ned_ids, get_device_platform
 from cisco_nso_mcp_server.services.environment import get_environment_summary
+from cisco_nso_mcp_server.services.prompts import get_default_nso_prompt_summary
 from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.client import NSORestconfClient
 from cisco_nso_restconf.devices import Devices
 from cisco_nso_restconf.query import Query
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
 
 
 def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Devices) -> None:
@@ -167,6 +168,32 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
                 "error_message": str(e)
             }
 
+def register_prompts(mcp: FastMCP) -> None:
+    """
+    Register prompt functions with the MCP server.
+    
+    This function registers the default NSO prompt with the MCP server.
+    The prompt provides context to AI models about the NSO environment
+    and guidelines for using the available tools.
+    
+    Args:
+        mcp: The FastMCP server instance to register prompts with
+    """
+    @mcp.prompt()
+    async def get_default_nso_prompt(ctx: Context) -> str:
+        """
+        This tool returns a default prompt for NSO.
+
+        Returns:
+            A string containing the default prompt.
+        """
+        try:
+            # delegate to the service layer
+            return await get_default_nso_prompt_summary(ctx)
+                
+        except Exception as e:
+            return "Error generating prompt: " + str(e)
+
 def parse_args() -> argparse.Namespace:
     """
     Parse command line arguments for the Cisco NSO MCP Server.
@@ -258,9 +285,10 @@ def main():
     devices_helper = Devices(client) # devices helper
     query_helper = Query(client) # query helper
 
-    # register resources and tools
+    # register resources, tools, and prompts
     register_resources(mcp, query_helper, devices_helper) # register resources
     register_tools(mcp, devices_helper) # register tools
+    register_prompts(mcp) # register prompts
 
     # run the server with stdio transport
     if args.transport == "stdio":
