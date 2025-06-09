@@ -31,7 +31,6 @@ def _process_device_data(device_platforms: List[Dict[str, Any]]) -> Dict[str, Di
             if label == 'name':
                 device_name = value
             else:
-                # convert label to snake_case if needed (already done in your data)
                 device_info[label] = value
     
         # add the device to our dictionary if we found a name
@@ -117,6 +116,23 @@ def _generate_insights(devices: Dict[str, Dict[str, Any]], device_groups: Dict[s
 async def get_environment_summary(query_helper: Query, devices_helper: Devices) -> Dict[str, Any]:
     """
     Retrieve a summary of the NSO environment.
+    
+    This function fetches device platform data and device groups from NSO,
+    processes the raw data into a structured format, and generates insights
+    about the environment including device counts, operating system distribution,
+    model distribution, and device group information.
+    
+    Args:
+        query_helper (Query): The Query helper for interacting with NSO.
+        devices_helper (Devices): The Devices helper for interacting with NSO devices.
+    
+    Returns:
+        Dict[str, Any]: A dictionary containing summary information about the NSO
+                        environment, including device counts, OS distribution,
+                        model distribution, and device group details.
+    
+    Raises:
+        ValueError: If there is an error retrieving or processing the environment data.
     """
     try:
         logger.info("Retrieving environment data from NSO")
@@ -132,10 +148,9 @@ async def get_environment_summary(query_helper: Query, devices_helper: Devices) 
         
         # generate insights from device data
         insights = _generate_insights(devices, device_groups)
-        response = insights
         logger.info("Successfully generated environment summary")
 
-        return response
+        return insights
         
     except Exception as e:
         logger.error(f"Error retrieving environment data: {str(e)}")
