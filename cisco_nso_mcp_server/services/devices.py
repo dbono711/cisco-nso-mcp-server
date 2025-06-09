@@ -143,3 +143,68 @@ async def get_device_ned_ids(devices_helper: Devices) -> Dict[str, Any]:
             "status": "error",
             "error_message": f"Unexpected error: {str(e)}"
         }
+    
+async def check_device_sync(devices_helper: Devices, device_name: str) -> Dict[str, Any]:
+    """
+    Check the sync status for a specific device in Cisco NSO.
+
+    Args:
+        devices_helper (Devices): The Devices helper for interacting with NSO devices.
+        device_name (str): The name of the device for which to check sync status.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the sync status for the specified device.
+
+    Raises:
+        ValueError: If the device name is missing or if the sync status cannot be retrieved.
+    """
+    if not device_name:
+        raise ValueError("Device name is required")
+    
+    try:
+        # check device sync using asyncio.to_thread since it's a bound method
+        device_sync = await asyncio.to_thread(
+            devices_helper.check_sync, 
+            device_name
+        )
+        response = device_sync
+        logger.info(f"Successfully checked sync status for device: {device_name}")
+
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error checking sync status for device {device_name}: {str(e)}")
+        raise ValueError(f"Failed to check sync status for device {device_name}: {str(e)}")
+
+async def sync_from_device(devices_helper: Devices, device_name: str) -> Dict[str, Any]:
+    """
+    Sync from a specific device in Cisco NSO.
+
+    Args:
+        devices_helper (Devices): The Devices helper for interacting with NSO devices.
+        device_name (str): The name of the device to sync.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the sync status for the specified device.
+
+    Raises:
+        ValueError: If the device name is missing or if the sync cannot be performed.
+    """
+    if not device_name:
+        raise ValueError("Device name is required")
+    
+    try:
+        # sync device using asyncio.to_thread since it's a bound method
+        device_sync = await asyncio.to_thread(
+            devices_helper.sync_from_device, 
+            device_name
+        )
+        response = device_sync
+        logger.info(f"Successfully synced device: {device_name}")
+
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error syncing device {device_name}: {str(e)}")
+        raise ValueError(f"Failed to sync device {device_name}: {str(e)}")
+        

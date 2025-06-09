@@ -8,7 +8,14 @@ network automation tools for interacting with Cisco NSO via RESTCONF.
 import argparse
 import os
 from typing import Any, Dict, Optional
-from cisco_nso_mcp_server.services.devices import get_device_config, get_device_ned_ids, get_device_platform, get_device_state
+from cisco_nso_mcp_server.services.devices import (
+    get_device_config,
+    get_device_ned_ids,
+    get_device_platform,
+    get_device_state,
+    check_device_sync,
+    sync_from_device
+)
 from cisco_nso_mcp_server.services.environment import get_environment_summary
 from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.client import NSORestconfClient
@@ -187,6 +194,60 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
         try:
             # delegate to the service layer
             return await get_device_ned_ids(devices_helper)
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error_message": str(e)
+            }
+
+    @mcp.tool(
+        name="check_device_sync",
+        description="Check the sync status for a specific device in Cisco NSO. Requires a 'device_name' parameter.",
+        tags={"devices", "sync"},
+        annotations={
+            "title": "Check Device Sync Status",
+            "readOnlyHint": True
+        }
+    )
+    async def check_device_sync_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            # validate required parameters
+            if not params or "device_name" not in params:
+                return {
+                    "status": "error",
+                    "error_message": "Missing required parameter: device_name"
+                }
+            
+            # delegate to the service layer
+            return await check_device_sync(devices_helper, params["device_name"])
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error_message": str(e)
+            }
+
+    @mcp.tool(
+        name="sync_from_device",
+        description="Sync from a specific device in Cisco NSO. Requires a 'device_name' parameter.",
+        tags={"devices", "sync"},
+        annotations={
+            "title": "Sync Device",
+            "readOnlyHint": False
+        }
+    )
+    async def sync_from_device_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            # validate required parameters
+            if not params or "device_name" not in params:
+                return {
+                    "status": "error",
+                    "error_message": "Missing required parameter: device_name"
+                }
+            
+            # delegate to the service layer
+            return await sync_from_device(devices_helper, params["device_name"])
                 
         except Exception as e:
             return {

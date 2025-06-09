@@ -34,10 +34,12 @@ A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Ser
 
 | Tool Name | Description | Inputs | Returns |
 | --- | --- | --- | --- |
-| `get_device_ned_ids_tool` | Retrieves Network Element Driver (NED) IDs from Cisco NSO |  | A dictionary with a list of NED IDs |
-| `get_device_platform_tool` | Gets platform information for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with platform information for the specified device |
-| `get_device_config_tool` | Gets full configuration for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with configuration for the specified device |
-| `get_device_state_tool` | Gets state for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with state for the specified device |
+| `get_device_ned_ids` | Retrieves Network Element Driver (NED) IDs from Cisco NSO |  | A dictionary with a list of NED IDs |
+| `get_device_platform` | Gets platform information for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with platform information for the specified device |
+| `get_device_config` | Gets full configuration for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with configuration for the specified device |
+| `get_device_state` | Gets state for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with state for the specified device |
+| `check_device_sync` | Checks sync status for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with sync status for the specified device |
+| `sync_from_device` | Syncs from a specific device in Cisco NSO | 'device_name' (string) | A dictionary with sync status for the specified device |
 
 ### Resources
 
