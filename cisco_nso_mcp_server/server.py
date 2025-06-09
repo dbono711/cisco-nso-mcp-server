@@ -8,7 +8,7 @@ network automation tools for interacting with Cisco NSO via RESTCONF.
 import argparse
 import os
 from typing import Any, Dict, Optional
-from cisco_nso_mcp_server.services.devices import get_device_config, get_device_ned_ids, get_device_platform
+from cisco_nso_mcp_server.services.devices import get_device_config, get_device_ned_ids, get_device_platform, get_device_state
 from cisco_nso_mcp_server.services.environment import get_environment_summary
 from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.client import NSORestconfClient
@@ -130,6 +130,33 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
             
             # delegate to the service layer
             return await get_device_config(devices_helper, params["device_name"])
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error_message": str(e)
+            }
+    
+    @mcp.tool(
+        name="get_device_state",
+        description="Retrieve the state for a specific device in Cisco NSO. Requires a 'device_name' parameter.",
+        tags={"devices", "state"},
+        annotations={
+            "title": "Get Device State",
+            "readOnlyHint": True
+        }
+    )
+    async def get_device_state_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            # validate required parameters
+            if not params or "device_name" not in params:
+                return {
+                    "status": "error",
+                    "error_message": "Missing required parameter: device_name"
+                }
+            
+            # delegate to the service layer
+            return await get_device_state(devices_helper, params["device_name"])
                 
         except Exception as e:
             return {

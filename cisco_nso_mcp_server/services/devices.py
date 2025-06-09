@@ -75,6 +75,38 @@ async def get_device_config(devices_helper: Devices, device_name: str) -> Dict[s
         logger.error(f"Error retrieving configuration for device {device_name}: {str(e)}")
         raise ValueError(f"Failed to retrieve configuration for device {device_name}: {str(e)}")
 
+async def get_device_state(devices_helper: Devices, device_name: str) -> Dict[str, Any]:
+    """
+    Retrieve the state for a specific device in Cisco NSO.
+
+    Args:
+        devices_helper (Devices): The Devices helper for interacting with NSO devices.
+        device_name (str): The name of the device for which to retrieve state.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the state for the specified device.
+
+    Raises:
+        ValueError: If the device name is missing or if the state cannot be retrieved.
+    """
+    if not device_name:
+        raise ValueError("Device name is required")
+    
+    try:
+        # get device state using asyncio.to_thread since it's a bound method
+        device_state = await asyncio.to_thread(
+            devices_helper.get_device_state, 
+            device_name
+        )
+        response = device_state
+        logger.info(f"Successfully retrieved state for device: {device_name}")
+
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error retrieving state for device {device_name}: {str(e)}")
+        raise ValueError(f"Failed to retrieve state for device {device_name}: {str(e)}")
+
 async def get_device_ned_ids(devices_helper: Devices) -> Dict[str, Any]:
     """
     Retrieve the available Network Element Driver (NED) IDs in Cisco NSO.
