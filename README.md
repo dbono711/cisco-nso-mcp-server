@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Services Orchestrator)](https://www.cisco.com/site/us/en/products/networking/software/crosswork-network-services-orchestrator/index.html) that exposes NSO data and operations as MCP primitives (Tools, Resources, etc.) that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-client), enabling AI-powered network automation through natural language interactions.
 
-## Example (custom client that integrates this MCP server with OpenAI in a Streamlit-based chat interface)
+## Sample Custom Client
 
 ![demo](./demos/client.gif)
 
@@ -96,8 +96,6 @@ You can connect to the server using any MCP client that supports the selected tr
 
 Windsurf Cascade [supports MCP servers](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) through a configuration file. To use the Cisco NSO MCP server with Windsurf, add it to your `mcp_config.json` file.
 
-**NOTE: Windsurf Cascade only [supports MCP tools](https://docs.windsurf.com/windsurf/cascade/mcp#notes) as of now.**
-
 #### Using uv (recommended)
 
 When using uv, no specific installation is needed. You can use `uvx` to directly run the package:
@@ -121,8 +119,6 @@ When using uv, no specific installation is needed. You can use `uvx` to directly
   }
 }
 ```
-
-The `env` section is optional. If you include it, you can specify the `LOG_FILE` environment variable to enable file logging.
 
 #### Using with pip installation
 
@@ -155,11 +151,11 @@ Now you can use the direct path to the executable:
 
 Replace `/path/to/your/env/bin/cisco-nso-mcp-server` with the actual path where you [installed the package with pip](#using-with-pip-installation). You can find this by running `which cisco-nso-mcp-server` if you installed it in your main environment, or by locating it in your virtual environment's bin directory.
 
-The `env` section is optional. If you include it, you can specify the `LOG_FILE` environment variable to enable file logging.
+In either case, the `env` section is optional. If you include it, you can specify the `LOG_FILE` environment variable to enable file logging.
 
 ### Using in a custom MCP client Python application with stdio transport
 
-A sample Python application is provided in [sample_stdio_client.py](./sample_stdio_client.py).
+A sample Python application is provided in [sample_stdio_client.py](./sample_stdio_client.py) that demonstrates how to connect to the MCP server locally and execute a tool.
 
 ## Running the Server as Standalone
 
