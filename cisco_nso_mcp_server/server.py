@@ -14,7 +14,8 @@ from cisco_nso_mcp_server.services.devices import (
     get_device_platform,
     get_device_state,
     check_device_sync,
-    sync_from_device
+    sync_from_device,
+    get_device_groups
 )
 from cisco_nso_mcp_server.services.environment import get_environment_summary
 from cisco_nso_mcp_server.utils import logger
@@ -172,8 +173,37 @@ def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
             }
     
     @mcp.tool(
+        name="get_device_groups",
+        description="Retrieve the available device groups in Cisco NSO.",
+        tags={"devices", "groups"},
+        annotations={
+            "title": "Get Device Groups",
+            "readOnlyHint": True
+        }
+    )
+    async def get_device_groups_tool(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        This tool retrieves the available device groups in Cisco NSO. The response will include a list of available device groups.
+
+        Args:
+            params (Optional[Dict[str, Any]], optional): Unused parameter. Defaults to None.
+
+        Returns:
+            A dictionary containing a list of available device groups.
+        """
+        try:
+            # delegate to the service layer
+            return await get_device_groups(devices_helper)
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error_message": str(e)
+            }
+    
+    @mcp.tool(
         name="get_device_ned_ids",
-        description="Retrieve the available Network Element Driver (NED) IDs in Cisco NSO",
+        description="Retrieve the available Network Element Driver (NED) IDs in Cisco NSO.",
         tags={"devices", "neds"},
         annotations={
             "title": "Get Device NED ID's",
