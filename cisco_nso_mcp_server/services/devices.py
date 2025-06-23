@@ -107,6 +107,43 @@ async def get_device_state(devices_helper: Devices, device_name: str) -> Dict[st
         logger.error(f"Error retrieving state for device {device_name}: {str(e)}")
         raise ValueError(f"Failed to retrieve state for device {device_name}: {str(e)}")
 
+async def get_device_groups(devices_helper: Devices) -> Dict[str, Any]:
+    """
+    Retrieve the available device groups in Cisco NSO.
+
+    Args:
+        devices_helper (Devices): The Devices helper for interacting with NSO devices.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the available device groups.
+
+    Raises:
+        ValueError: If the device groups cannot be retrieved.
+    """
+    try:
+        # get device groups using asyncio.to_thread since it's a bound method
+        device_groups = await asyncio.to_thread(devices_helper.get_device_groups)
+        response = device_groups
+        logger.info("Successfully retrieved device groups")
+
+        return response
+            
+    except (ValueError, RequestException) as e:
+        logger.error(f"Error retrieving device groups: {str(e)}")
+        return {
+            "device_groups": [],
+            "status": "error",
+            "error_message": str(e)
+        }
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return {
+            "device_groups": [],
+            "status": "error",
+            "error_message": f"Unexpected error: {str(e)}"
+        }
+
 async def get_device_ned_ids(devices_helper: Devices) -> Dict[str, Any]:
     """
     Retrieve the available Network Element Driver (NED) IDs in Cisco NSO.
@@ -143,7 +180,7 @@ async def get_device_ned_ids(devices_helper: Devices) -> Dict[str, Any]:
             "status": "error",
             "error_message": f"Unexpected error: {str(e)}"
         }
-    
+
 async def check_device_sync(devices_helper: Devices, device_name: str) -> Dict[str, Any]:
     """
     Check the sync status for a specific device in Cisco NSO.
