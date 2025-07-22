@@ -1,6 +1,6 @@
 # Cisco NSO MCP Server
 
-A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Services Orchestrator)](https://www.cisco.com/site/us/en/products/networking/software/crosswork-network-services-orchestrator/index.html) that exposes NSO data and operations as MCP primitives (Tools, Resources, etc.) that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-client), enabling AI-powered network automation through natural language interactions.
+A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Services Orchestrator)](https://www.cisco.com/site/us/en/products/networking/software/crosswork-network-services-orchestrator/index.html) that exposes NSO data and operations as MCP primitives (Tools, Resources, etc.) that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-clients), enabling AI-powered network automation through natural language interactions.
 
 ## Sample Custom Client
 
@@ -41,6 +41,8 @@ A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Ser
 | `get_device_state` | Gets state for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with state for the specified device |
 | `check_device_sync` | Checks sync status for a specific device in Cisco NSO | 'device_name' (string) | A dictionary with sync status for the specified device |
 | `sync_from_device` | Syncs from a specific device in Cisco NSO | 'device_name' (string) | A dictionary with sync status for the specified device |
+| `get_service_types` | Gets service types in Cisco NSO |  | A dictionary with service types |
+| `get_services` | Gets services for a specific service type in Cisco NSO | 'service_type' (string) | A dictionary with services for the specified service type |
 
 ### Resources
 

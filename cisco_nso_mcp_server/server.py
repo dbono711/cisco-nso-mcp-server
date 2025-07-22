@@ -17,6 +17,10 @@ from cisco_nso_mcp_server.services.devices import (
     sync_from_device,
     get_device_groups
 )
+from cisco_nso_mcp_server.services.services import (
+    get_service_types,
+    get_services
+)
 from cisco_nso_mcp_server.services.environment import get_environment_summary
 from cisco_nso_mcp_server.utils import logger
 from cisco_nso_restconf.client import NSORestconfClient
@@ -25,7 +29,7 @@ from cisco_nso_restconf.query import Query
 from fastmcp import FastMCP
 
 
-def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Devices) -> None:
+def register_resources(mcp: FastMCP, devices_helper: Devices, query_helper: Query) -> None:
     """
     Register resources with the MCP server.
     
@@ -65,18 +69,86 @@ def register_resources(mcp: FastMCP, query_helper: Query, devices_helper: Device
                 "error_message": str(e)
             }
 
-def register_tools(mcp: FastMCP, devices_helper: Devices) -> None:
+def register_tools(mcp: FastMCP, client: NSORestconfClient, devices_helper: Devices) -> None:
     """
     Register tools with the MCP server.
     
     This function registers all available tools with the MCP server,
     including tools for retrieving device platform information, device configuration,
-    and Network Element Driver (NED) IDs from Cisco NSO.
+    Network Element Driver (NED) IDs, and services from Cisco NSO.
     
     Args:
         mcp: The FastMCP server instance to register tools with
+        client: The NSORestconfClient instance for interacting with NSO
         devices_helper: The Devices helper for interacting with NSO devices
     """
+    @mcp.tool(
+        name="get_service_types",
+        description="Retrieve the available service types in Cisco NSO.",
+        tags={"services", "types"},
+        annotations={
+            "title": "Get Service Types",
+            "readOnlyHint": True
+        }
+    )
+    async def get_service_types_tool(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        This tool retrieves the available service types in Cisco NSO. 
+        The response will include a list of available service types.
+
+        Args:
+            params (Optional[Dict[str, Any]], optional): Unused parameter. Defaults to None.
+
+        Returns:
+            A dictionary containing a list of available service types.
+        """
+        try:
+            # delegate to the service layer
+            return await get_service_types(client)
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error_message": str(e)
+            }
+    
+    @mcp.tool(
+        name="get_services",
+        description="Retrieve the available services in Cisco NSO. Requires a 'service_type' parameter.",
+        tags={"services", "service"},
+        annotations={
+            "title": "Get Services",
+            "readOnlyHint": True
+        }
+    )
+    async def get_services_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        This tool retrieves the available services in Cisco NSO. 
+        The response will include a list of available services.
+
+        Args:
+            params (Optional[Dict[str, Any]], optional): Unused parameter. Defaults to None.
+
+        Returns:
+            A dictionary containing a list of available services.
+        """
+        try:
+            # validate required parameters
+            if not params or "service_type" not in params:
+                return {
+                    "status": "error",
+                    "error_message": "Missing required parameter: service_type"
+                }
+
+            # delegate to the service layer
+            return await get_services(client, params["service_type"])
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error_message": str(e)
+            }
+
     @mcp.tool(
         name="get_device_platform",
         description="Retrieve platform information for a specific device in Cisco NSO. Requires a 'device_name' parameter.",
@@ -377,8 +449,8 @@ def main():
     query_helper = Query(client) # query helper
 
     # register resources and tools
-    register_resources(mcp, query_helper, devices_helper) # register resources
-    register_tools(mcp, devices_helper) # register tools
+    register_resources(mcp, devices_helper, query_helper) # register resources
+    register_tools(mcp, client, devices_helper) # register tools
 
     # run the server with stdio transport
     if args.transport == "stdio":
