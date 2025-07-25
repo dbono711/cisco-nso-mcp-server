@@ -55,6 +55,7 @@ async def get_services(client: NSORestconfClient, service_type: str) -> Dict[str
 
     Args:
         client (NSORestconfClient): The NSORestconfClient for interacting with NSO.
+        service_type (str): The type of service to retrieve, which is the name of the service including namespace after /ncs:services.
 
     Returns:
         Dict[str, Any]: A dictionary containing the services in Cisco NSO.
@@ -64,7 +65,7 @@ async def get_services(client: NSORestconfClient, service_type: str) -> Dict[str
     """
     try:
         # get services using asyncio.to_thread since it's a bound method
-        resource = f"tailf-ncs:services/{service_type}:{service_type}"
+        resource = f"tailf-ncs:services/{service_type}"
         services = await asyncio.to_thread(client.get, resource)
         response = services.json()
         logger.info("Successfully retrieved services")
