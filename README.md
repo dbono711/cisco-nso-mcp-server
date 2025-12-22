@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dbono711-cisco-nso-mcp-server-badge.png)](https://mseep.ai/app/dbono711-cisco-nso-mcp-server)
+
 # Cisco NSO MCP Server
 
 A Model Context Protocol (MCP) server implementation for [Cisco NSO (Network Services Orchestrator)](https://www.cisco.com/site/us/en/products/networking/software/crosswork-network-services-orchestrator/index.html) that exposes NSO data and operations as MCP primitives (Tools, Resources, etc.) that can be consumed by an [MCP-compatible client](#connecting-to-the-server-with-mcp-clients), enabling AI-powered network automation through natural language interactions.
